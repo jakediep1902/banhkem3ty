@@ -114,59 +114,77 @@ async function getPrice() {
 }
 
 
-// Hàm cập nhật sản phẩm trên giao diện
 function updateProductList(data) {
-    const productList = document.querySelector(".product-container"); // Chọn container chứa tất cả sản phẩm
+    // Lấy phần tử chứa danh sách sản phẩm
+    const productList = document.querySelector(".product-container");
 
+    // Nếu không tìm thấy container, in lỗi và dừng
     if (!productList) {
         console.error("❌ LỖI: Không tìm thấy phần tử .product-container!");
         return;
     }
 
+    // Duyệt qua từng sản phẩm trong dữ liệu
     for (const key in data) {
         if (data.hasOwnProperty(key)) {
             try {
-                const productData = JSON.parse(data[key]); // Chuyển đổi từ chuỗi JSON sang object
-                
-                //const price = productData.price || "Đang cập nhật";
-                const price = (productData.price !== undefined && Number(productData.price) > 0) 
-    ? productData.price 
-    : "Đang cập nhật";
+                // Chuyển chuỗi JSON thành object sản phẩm
+                const productData = JSON.parse(data[key]);
 
-                console.log("####################",price)
-                //if (Number(price) < 0) continue;
+                // Lấy giá sản phẩm, kiểm tra xem có hợp lệ không (phải là số > 0)
+                const rawPrice = Number(productData.price);
+                const isValidPrice = !isNaN(rawPrice) && rawPrice > 0;
 
-                const imageUrl = productData.image || "https://via.placeholder.com/150"; // URL ảnh từ dữ liệu
-                const productName = key.charAt(0).toUpperCase() + key.slice(1); // Viết hoa chữ cái đầu
+                // Hiển thị giá nếu hợp lệ, nếu không thì ghi là "Đang cập nhật"
+                const price = isValidPrice ? rawPrice : "Đang cập nhật";
 
+                // Lấy URL ảnh (mặc định nếu không có)
+                const imageUrl = productData.image || "https://via.placeholder.com/150";
+
+                // Tạo tên sản phẩm có chữ cái đầu viết hoa
+                const productName = key.charAt(0).toUpperCase() + key.slice(1);
+
+                // Tìm xem sản phẩm này đã tồn tại trong DOM chưa
                 let existingProduct = document.querySelector(`.product[data-name="${key}"]`);
 
                 if (existingProduct) {
-                    console.log("🔄 Cập nhật sản phẩm:", key);
-                    // Cập nhật giá
-                    existingProduct.querySelector(".price").innerText = `Giá: ${price} VNĐ/kg`;
-                    // Cập nhật hình ảnh
-                    existingProduct.querySelector("img").src = imageUrl;
+                    if (!isValidPrice) {
+                        // Nếu giá không hợp lệ (<= 0) → xóa sản phẩm khỏi giao diện
+                        console.log("❌ Xóa sản phẩm do giá = 0 hoặc không hợp lệ:", key);
+                        existingProduct.remove();
+                    } else {
+                        // Nếu đã tồn tại và giá hợp lệ → cập nhật thông tin
+                        console.log("🔄 Cập nhật sản phẩm:", key);
+                        existingProduct.querySelector(".price").innerText = `Giá: ${price} VNĐ`;
+                        existingProduct.querySelector("img").src = imageUrl;
+                    }
                 } else {
-                     
-                    console.log("➕ Tạo sản phẩm mới:", key);
-                    // Tạo sản phẩm mới nếu chưa có
-                    const productDiv = document.createElement("div");
-                    productDiv.classList.add("product");
-                    productDiv.dataset.name = key;
-                    productDiv.innerHTML = `
-                        <img src="${imageUrl}" alt="${productName}">
-                        <h3>${productName}</h3>
-                        <p class="price">Giá: ${price} VNĐ/kg</p>
-                    `;
-                    productList.appendChild(productDiv);
+                    if (isValidPrice) {
+                        // Nếu chưa tồn tại và giá hợp lệ → tạo mới sản phẩm
+                        console.log("➕ Tạo sản phẩm mới:", key);
+                        const productDiv = document.createElement("div");
+                        productDiv.classList.add("product");
+                        productDiv.dataset.name = key;
+                        productDiv.innerHTML = `
+                            <img src="${imageUrl}" alt="${productName}">
+                            <h3>${productName}</h3>
+                            <p class="price">Giá: ${price} VNĐ</p>
+                        `;
+                        productList.appendChild(productDiv);
+                    } else {
+                        // Nếu giá không hợp lệ → không tạo sản phẩm
+                        console.log("⏩ Bỏ qua tạo sản phẩm do giá không hợp lệ:", key);
+                    }
                 }
             } catch (error) {
+                // Bắt lỗi nếu JSON bị sai hoặc xử lý thất bại
                 console.error(`❌ Lỗi khi xử lý sản phẩm "${key}":`, error);
             }
         }
     }
 }
+
+
 
 
 // Gọi hàm khi trang tải
