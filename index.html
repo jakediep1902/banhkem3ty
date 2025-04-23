@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BÁNH KEM 3 TỶ</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="logo">
+            <!-- <img src="images/logo.jpg" alt="Innovex Global"> -->
+        </div>
+        <nav class="nav-menu">
+            <ul>
+                <li><a href="index.html">🏠 Trang chủ</a></li>
+                <li><a href="sanpham.html">🛒 Sản phẩm</a></li>
+                <li><a href="lienhe.html">📞 Liên hệ</a></li>
+            </ul>
+        </nav>
+        <a href="tel:+84989855092" class="call-button">📞 Gọi ngay</a>
+    </header>
+    <div id="content"></div> <!-- Phần tử để hiển thị nội dung -->
+   
+
+    <div class="product-container">
+        <!-- <div class="product" id="1" data-name="Fresh Ginger">
+            <img src="https://images.unsplash.com/photo-1573414405995-2012861b74e0?q=80&w=600&auto=format&fit=crop" alt="Gừng Tươi">
+            <h3>Gừng Tươi</h3>
+            <p class="price">Giá: Đang tải...</p>
+        </div> -->
+    
+    </div>
+    
+    <footer>
+        
+        <a href="#" onclick="checkAdminPassword()">🔑 ADMIN</a>
+    </footer>
+    <footer>
+        <p>&copy; 2024 BÁNH KEM 3 TỶ. All rights reserved.</p>
+    </footer>
+
+<script>
+
+const titleID = GetTitleID();
+const secretKey =  GetSCkey(); // 🔴 THAY THẾ BẰNG SECRET KEY CỦA BẠN
+
+function checkAdminPassword() {
+    const passwordKey = "admin_password_verified";
+    const expirationMinutes = 10; // ⏳ Khoảng thời gian yêu cầu nhập lại mật khẩu (đơn vị: phút)
+
+    const lastVerifiedTime = localStorage.getItem(passwordKey);
+    const currentTime = new Date().getTime();
+
+    // Nếu đã xác thực trước đó và chưa hết hạn
+    if (lastVerifiedTime && currentTime - lastVerifiedTime < expirationMinutes * 60 * 1000) {
+        window.location.href = "admin.html";
+        return;
+    }
+
+    // Yêu cầu nhập mật khẩu nếu chưa có hoặc đã hết hạn
+    let password = prompt("Nhập mật khẩu ADMIN:");
+    if (password === "123456") {  // 🔑 Thay "123456" bằng mật khẩu thực tế
+        localStorage.setItem(passwordKey, currentTime); // Lưu thời gian xác thực
+        window.location.href = "admin.html";
+    } else if (password !== null) {
+        alert("Sai mật khẩu! Vui lòng thử lại.");
+    }
+}
+
+   // Danh sách sản phẩm đã hiển thị
+const currentProducts = new Set();
+
+// Danh sách hình ảnh sản phẩm
+const productImages = {
+    banana: "https://giongchuoicaymo.com/wp-content/uploads/2021/05/chuoi-laba-da-lat-428-1.jpg",
+    cacao: "https://villagecacao.com/uploads/shops/2021_04/cacao.jpg",
+    ginger: "https://images.unsplash.com/photo-1573414405995-2012861b74e0?q=80&w=600&auto=format&fit=crop",
+    garlic: "https://product.hstatic.net/1000178034/product/toi_cu_to_-_1kg_370a8b9654914afca274dd65eff74c08_4761b715a06d4d0b829d2e54689d170d_master.jpg",
+    pepper: "https://static.kinhtedothi.vn/images/upload/2021/12/19/ea4a7274-efa1-47e9-b6dd-c23799707242.jpg",
+    chili: "https://suckhoedoisong.qltns.mediacdn.vn/2015/1-ot-cay-1424484052730.jpg",
+    thancui: "https://lh3.googleusercontent.com/pw/AP1GczOHKYKYFGrWEOlXMYE54hjwj6vG9NTLAn3vJ3iOFI2MhAezzBLiFowG6aa4rlqyIppxg0m8ex573BVdWA_2DIcF2Vro5OjgIPAz5VF5ltZT_0khmRi9IOM4iukJNKjnFFbgr32WcZYEFy8D08PRqwhX=w1260-h945-s-no-gm?authuser=0",
+    vanep:"https://scontent.fsgn2-7.fna.fbcdn.net/v/t39.30808-6/457224960_495698036796149_7733101225166612730_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=833d8c&_nc_ohc=6AcosORhPEMQ7kNvgFTHXhC&_nc_oc=AdirrUilvJ_l_DGd3glUAAh-COkJ4kxk-FikXWgqUrN48nlqnL020VEAxcLmTtzsh7GQuqV5QFqbaXucD8fSbMiD&_nc_zt=23&_nc_ht=scontent.fsgn2-7.fna&_nc_gid=cmk3CCTz9gsaiM0u72NvEw&oh=00_AYGgYaD9j3eyTsS44TKFlEeVFUCCGrzGJRc0rL9etOnq2w&oe=67DD75F6"
+};
+
+// Hàm gọi PlayFab API để lấy dữ liệu sản phẩm
+async function getPrice() {
+    const url = `https://${titleID}.playfabapi.com/Admin/GetTitleData`;
+    
+
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-SecretKey": secretKey
+            },
+            body: JSON.stringify({})
+        });
+
+        const result = await response.json();
+        console.log("📡 Dữ liệu từ PlayFab:", result);
+
+        if (response.ok) {
+            updateProductList(result.data.Data);
+        } else {
+            console.error("❌ Lỗi tải dữ liệu:", result.errorMessage);
+        }
+    } catch (error) {
+        console.error("❌ Lỗi kết nối:", error);
+    }
+}
+
+
+// Hàm cập nhật sản phẩm trên giao diện
+function updateProductList(data) {
+    const productList = document.querySelector(".product-container"); // Chọn container chứa tất cả sản phẩm
+
+    if (!productList) {
+        console.error("❌ LỖI: Không tìm thấy phần tử .product-container!");
+        return;
+    }
+
+    for (const key in data) {
+        if (data.hasOwnProperty(key)) {
+            try {
+                const productData = JSON.parse(data[key]); // Chuyển đổi từ chuỗi JSON sang object
+                
+                //const price = productData.price || "Đang cập nhật";
+                const price = (productData.price !== undefined && Number(productData.price) > 0) 
+    ? productData.price 
+    : "Đang cập nhật";
+
+                console.log("####################",price)
+                //if (Number(price) < 0) continue;
+
+                const imageUrl = productData.image || "https://via.placeholder.com/150"; // URL ảnh từ dữ liệu
+                const productName = key.charAt(0).toUpperCase() + key.slice(1); // Viết hoa chữ cái đầu
+
+                let existingProduct = document.querySelector(`.product[data-name="${key}"]`);
+
+                if (existingProduct) {
+                    console.log("🔄 Cập nhật sản phẩm:", key);
+                    // Cập nhật giá
+                    existingProduct.querySelector(".price").innerText = `Giá: ${price} VNĐ/kg`;
+                    // Cập nhật hình ảnh
+                    existingProduct.querySelector("img").src = imageUrl;
+                } else {
+                     
+                    console.log("➕ Tạo sản phẩm mới:", key);
+                    // Tạo sản phẩm mới nếu chưa có
+                    const productDiv = document.createElement("div");
+                    productDiv.classList.add("product");
+                    productDiv.dataset.name = key;
+                    productDiv.innerHTML = `
+                        <img src="${imageUrl}" alt="${productName}">
+                        <h3>${productName}</h3>
+                        <p class="price">Giá: ${price} VNĐ/kg</p>
+                    `;
+                    productList.appendChild(productDiv);
+                }
+            } catch (error) {
+                console.error(`❌ Lỗi khi xử lý sản phẩm "${key}":`, error);
+            }
+        }
+    }
+}
+
+
+// Gọi hàm khi trang tải
+document.addEventListener("DOMContentLoaded", () => {
+    getPrice();
+    setInterval(getPrice, 50000); // Cập nhật giá mỗi 50 giây
+});
+
+
+
+
+
+</script>
+<div class="container">
+    <a href="tel:+84989855092" class="button">📞 Liên hệ: CHÍ CÔNG</a>
+    <a href="https://zalo.me/0989855092" class="button">💬 Nhắn Zalo</a>
+    <!-- <a href="En.html" class="button">🌐 English</a> -->
+</div>
+</body>
+</html>
